@@ -1,4 +1,5 @@
 # bibobibo-web
+<<<<<<< HEAD
 
 ## Project setup
 ```
@@ -22,3 +23,6 @@ pnpm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+=======
+Bibobibo —— 视频分享平台：视频+弹幕+社区（前端）
+>>>>>>> 73ba1980f921a98112465ebb2a300b9e3bff6b64
