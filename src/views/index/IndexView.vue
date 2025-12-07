@@ -1,6 +1,6 @@
 <template>
   <div>
-    indexView
+    IndexView
     <header>
       <RouterLink v-if="false" to="/login">登录</RouterLink>
       <div v-else>头像</div>

@@ -1,3 +1,11 @@
+<template>
+  <div v-if="video">
+    视频播放
+    <h1>{{ video.title }}</h1>
+    <video controls :src="video.videoUrl"></video>
+    <p>{{ video.introduction }}</p>
+  </div>
+</template>
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useRoute } from "vue-router"
@@ -13,11 +21,3 @@ onMounted(async () => {
   video.value = res.data.data
 })
 </script>
-
-<template>
-  <div v-if="video">
-    <h1>{{ video.title }}</h1>
-    <video controls :src="video.videoUrl"></video>
-    <p>{{ video.introduction }}</p>
-  </div>
-</template>

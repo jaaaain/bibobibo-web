@@ -11,9 +11,8 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import axios from 'axios'
 import { apiLogin } from '@/api/user'
 import router from '@/router'
 
@@ -22,20 +21,15 @@ const password = ref('')
 const message = ref('')
 
 const handleLogin = async () => {
-  try {
-    const res = await apiLogin(username.value, password.value)
-    message.value = res.data
-    router.push('/')
-  } catch (e) {
-    if (e.response) {
-      message.value = e.response.data
-    } else {
-      message.value = '请求失败'
-    }
-  }
+  const res = await apiLogin(username.value, password.value)
+  message.value = res.data
+  router.push('/')
 }
 </script>
 
 <style>
-.login-container { width: 300px; margin: 50px auto; }
+.login-container {
+  width: 300px;
+  margin: 50px auto;
+}
 </style>
