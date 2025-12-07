@@ -22,12 +22,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname,'src/'),
-      "@api": resolve(__dirname,'src/api/'),
-      "@components": resolve(__dirname,'src/components/'),
-      "@utils": resolve(__dirname,'src/utils/'),
-      "@types": resolve(__dirname,'src/types/'),
-      "@views": resolve(__dirname,'src/views/')
+      "@": resolve(__dirname,'src/')
     },
     extensions: ['.js', '.ts', '.json']
   }

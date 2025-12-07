@@ -3,28 +3,28 @@ import type { Danmaku } from '@/types/danmaku'
 import type { PageResult, Result } from '@/types/common'
 
 // 分页列表
-export function getListDanmaku(page = 1, size = 10) {
+export function apiGetListDanmaku(page = 1, size = 10) {
   return request.get<Result<PageResult<Danmaku>>>(`/danmaku/list`, {
     params: { page, size }
   })
 }
 
 // 详情
-export function getDanmaku(id: number) {
+export function apiGetDanmaku(id: number) {
   return request.get<Result<Danmaku>>(`/danmaku/${id}`)
 }
 
 // 新增
-export function addDanmaku(data: Danmaku) {
+export function apiAddDanmaku(data: Danmaku) {
   return request.post<Result<boolean>>(`/danmaku`, data)
 }
 
 // 修改
-export function updateDanmaku(data: Danmaku) {
+export function apiUpdateDanmaku(data: Danmaku) {
   return request.put<Result<boolean>>(`/danmaku`, data)
 }
 
 // 删除
-export function deleteDanmaku(id: number) {
+export function apiDeleteDanmaku(id: number) {
   return request.delete<Result<boolean>>(`/danmaku/${id}`)
 }
