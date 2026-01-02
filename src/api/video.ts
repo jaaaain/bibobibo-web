@@ -1,6 +1,6 @@
 import { get, post, del } from "@/utils/request"
 import type { PageResult } from "@/types/common"
-import type { VideoDataCardVO, VideoDataDetailVO, VideoQuery, VideoUpdateDto } from "@/types/video"
+import type { VideoDataCardVO, VideoDataDetailVO, VideoDraftVO, VideoQuery, VideoUpdateDto } from "@/types/video"
 
 // 获取视频详情
 export const apiGetVideoById = async (id: number): Promise<VideoDataDetailVO> => {
@@ -8,9 +8,9 @@ export const apiGetVideoById = async (id: number): Promise<VideoDataDetailVO> =>
 }
 
 // 创建草稿（后端接口使用 RequestParam：url, title, fileKey）
-export const apiCreateDraft = async (url: string, title: string, fileKey: string): Promise<Video> => {
+export const apiCreateDraft = async (url: string, title: string, fileKey: string): Promise<VideoDraftVO> => {
   const params = new URLSearchParams({ url, title, fileKey }).toString()
-  return await post<Video>(`/video/create-draft?${params}`)
+  return await post<VideoDraftVO>(`/video/create-draft?${params}`)
 }
 
 // 更新视频信息（RequestBody）
@@ -34,6 +34,6 @@ export const apiGetVideoPage = async (page: number, size: number): Promise<PageR
 }
 
 // 获取我的视频（需要登录）
-export const apiGetMyVideoPage = async (page: number, size: number): Promise<PageResult<Video>> => {
-  return await get<PageResult<Video>>(`/video/page/my`, { page, size })
+export const apiGetMyVideoPage = async (page: number, size: number): Promise<PageResult<VideoDataCardVO>> => {
+  return await get<PageResult<VideoDataCardVO>>(`/video/page/my`, { page, size })
 }
