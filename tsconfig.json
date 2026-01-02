@@ -1,13 +1,14 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "types": ["vite/client", "unplugin-auto-import", "unplugin-vue-components"]
   },
+  "include": [
+    "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue",
+    "src/auto-imports.d.ts",
+    "src/components.d.ts"
+  ]
 }

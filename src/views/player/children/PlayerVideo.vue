@@ -7,8 +7,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { useRoute } from "vue-router"
 import { apiGetVideoById } from "@/api/video"
 import type { Video } from "@/types/video"
 

@@ -24,8 +24,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* 不使用 flex 居中，以避免全局把页面内容垂直/水平居中导致位移 */
   min-width: 320px;
   min-height: 100vh;
 }
@@ -59,9 +58,6 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 

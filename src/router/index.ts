@@ -8,7 +8,7 @@ const router = createRouter({
 
     // 消息中心
     {
-      path: '/message/:id',
+      path: '/message',
       component: () => import('@/views/message/MessageView.vue'),
       children: [
         { path: 'at', component: () => import('@/views/message/children/MessageAt.vue') },
@@ -22,7 +22,7 @@ const router = createRouter({
 
     // 创作中心
     {
-      path: '/platform/:id',
+      path: '/platform',
       component: () => import('@/views/platform/PlatformView.vue'),
       children: [
         { path: 'allowance', component: () => import('@/views/platform/children/PlatformAllowance.vue') },
@@ -61,7 +61,7 @@ const router = createRouter({
 
     // 设置
     {
-      path: '/settings/:id',
+      path: '/settings',
       component: () => import('@/views/settings/SettingView.vue'),
       children: [
         { path: 'account', component: () => import('@/views/settings/children/SettingAccount.vue') },
@@ -73,7 +73,7 @@ const router = createRouter({
 
     // 个人空间
     {
-      path: '/space/:id',
+      path: '/space',
       component: () => import('@/views/space/SpaceView.vue'),
       children: [
         { path: 'dynamic', component: () => import('@/views/space/children/SpaceDynamic.vue') },
