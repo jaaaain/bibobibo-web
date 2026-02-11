@@ -28,6 +28,7 @@ declare module 'vue' {
     HeaderBar: typeof import('./components/layout/HeaderBar.vue')['default']
     LeftBar: typeof import('./components/features/platform/NavBar.vue')['default']
     NavBar: typeof import('./components/features/platform/NavBar.vue')['default']
+    NMessageProvider: typeof import('naive-ui')['NMessageProvider']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchInput: typeof import('./components/ui/input/SearchInput.vue')['default']

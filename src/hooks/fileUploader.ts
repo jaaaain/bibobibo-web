@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { apiUpload, apiInitUpload, apiFinishUpload } from '@/api/file'
-import { SparkMD5 } from 'spark-md5'
+import SparkMD5 from 'spark-md5'
 import { FileUploadStateEnum, FileUploadTypeEnum, UploadStatus } from '@/types/file'
 
 const CHUNK_LIMIT = 5 * 1024 * 1024 // 5MB
@@ -10,11 +10,13 @@ export function useUploader() {
     const progress = ref<number>(0)
 
     const upload = async (file: File, uploadType: FileUploadTypeEnum) => {
+        console.log("开始上传文件", file, uploadType);
         uploadStatus.value = UploadStatus.Uploading
         progress.value = 0
 
         /** 1️. 小文件直传 */
         if (file.size < CHUNK_LIMIT) {
+            console.log("小文件直传");
             const res = await apiUpload(file, uploadType)
             progress.value = 100
             uploadStatus.value = UploadStatus.Done
@@ -40,6 +42,7 @@ export function useUploader() {
         const chunkSize = init.chunkSize
         const partUrls = init.partUrls
         for (let i = 0; i < partUrls.length; i++) {
+            console.log(`上传分片 ${i + 1}/${partUrls.length}`);
             const start = i * chunkSize
             const end = Math.min(start + chunkSize, file.size)
             const blob = file.slice(start, end)
@@ -53,6 +56,7 @@ export function useUploader() {
         }
 
         const res = await apiFinishUpload(init.uploadId)
+        console.log("完成上传文件，结果：", res);
 
         progress.value = 100
         uploadStatus.value = UploadStatus.Done

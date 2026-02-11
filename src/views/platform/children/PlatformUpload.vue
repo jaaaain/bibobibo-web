@@ -27,7 +27,8 @@
           <!-- 草稿项目列表 -->
           <div class="draft-list">
             <div v-for="draft in drafts" :key="draft.draftData.id"
-              :class="['draft-list-item', { selected: draft.draftData.id === selectedId }]" @click="selectDraft(draft.draftData.id)">
+              :class="['draft-list-item', { selected: draft.draftData.id === selectedId }]"
+              @click="selectDraft(draft.draftData.id)">
               <div class="draft-title">{{ draft.draftData.title }}</div>
             </div>
           </div>
@@ -54,10 +55,10 @@
       </div>
 
       <!-- 基本设置 -->
-  <div class="form" v-if="selectedId !== null">
+      <div class="form" v-if="selectedId !== null">
         <div class="panel">
           <h3>基本设置</h3>
-          
+
           <form @submit.prevent="publishVideo">
             <div class="form-row">
               <label>封面</label>
@@ -76,6 +77,7 @@
             </div>
 
             <div class="form-actions">
+              <button type="button" @click="updateDraft">保存草稿</button>
               <button type="submit">提交投稿</button>
             </div>
           </form>
@@ -87,24 +89,37 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from 'vue-router'
+import { useMessage } from 'naive-ui'
 import { apiGetMyDraftVideoList } from "@/api/platform";
 import { apiCreateDraft, apiUpdateVideo, apiPublishVideo, apiDeleteVideo } from "@/api/video";
-import type { DraftModel, VideoData } from "@/types/video";
-import {useUploader} from "@/hooks/fileUploader";
-import { FileUploadTypeEnum, UploadStatus } from "@/types/file";
+import type { DraftModel, DraftData } from "@/types/video";
+import { useUploader } from "@/hooks/fileUploader";
+import { FileUploadTypeEnum, UploadStatus, UploadTaskModel } from "@/types/file";
+import { c } from "naive-ui";
 
 // tasks 既显示已有草稿（Video）
 const loading = ref<boolean>(false); // 加载状态
 const drafts = ref<Array<DraftModel>>([]); // 当前用户的草稿列表
-const selectedId = ref<number | null>(null); // 选中的草稿索引
-const editDraft = ref<VideoData | null>(null)
+const selectedId = ref<string | null>(null); // 选中的草稿索引
+const editDraft = ref<DraftData | null>(null)
+const router = useRouter()
+const message = useMessage()
 
 // ===================== 草稿项目相关方法 =====================
 // 获取草稿列表
 const loadDrafts = async () => {
   loading.value = true
   try {
-    drafts.value = await apiGetMyDraftVideoList()
+    const res = await apiGetMyDraftVideoList()
+    drafts.value = res.map(item => ({
+      draftData: item,
+      uploadTask: {
+        title: item.title,
+        progress: ref(100),
+        status: ref(UploadStatus.Done)
+      }
+    }))
     console.log("加载草稿列表", drafts.value)
     if (drafts.value.length > 0 && !selectedId.value) { // 有草稿且未选中任何草稿
       selectDraft(drafts.value[0].draftData.id);
@@ -116,12 +131,13 @@ const loadDrafts = async () => {
 onMounted(loadDrafts)
 const selectedUploadTask = computed(() => drafts.value.find(d => d.draftData.id === selectedId.value)?.uploadTask ?? null)
 // 选择草稿
-function selectDraft(id: number) {
+function selectDraft(id: string) {
+  console.log("选择草稿", id);
   selectedId.value = id;
   editDraft.value = drafts.value.find(d => d.draftData.id === id)?.draftData ?? null;
 }
 // 删除草稿
-async function deleteDraft(id: number) {
+async function deleteDraft(id: string) {
   if (!confirm("确定要删除这个草稿吗？")) return;
   try {
     await apiDeleteVideo(id);
@@ -139,8 +155,12 @@ async function updateDraft() {
   if (!editDraft.value) return;
   try {
     await apiUpdateVideo(editDraft.value);
+    message.success('保存草稿成功')
+    // refresh list
+    await loadDrafts()
   } catch (err) {
     console.error('保存草稿失败', err);
+    message.error('保存草稿失败')
   }
 }
 // 发布/保存草稿
@@ -149,46 +169,58 @@ async function publishVideo() {
 
   try {
     await apiUpdateVideo(editDraft.value);
-    await apiPublishVideo(editDraft.value.id); 
+    await apiPublishVideo(editDraft.value.id);
+    message.success('投稿已提交，正在审核')
+    // 刷新草稿列表，然后跳到首页
     await loadDrafts();
+    // 小延迟让用户看到提示后再跳转
+    setTimeout(() => {
+      router.push('/')
+    }, 300)
   } catch (err) {
-    console.error('保存草稿失败', err);
+    console.error('投稿失败', err);
+    message.error('投稿失败，请重试')
   }
 }
 // ===================== 文件上传相关方法 =====================
 // 文件拖拽上传或点击上传触发
 function onFileChange(e: Event) {
+  console.log("文件选择事件触发");
   const input = e.target as HTMLInputElement;
   if (!input.files || !input.files[0]) return;
   handleNewUpload(input.files[0]);
 }
 function onDrop(e: DragEvent) {
+  console.log("文件拖拽事件触发");
   if (!e.dataTransfer) return;
   const file = e.dataTransfer.files[0];
   if (file) handleNewUpload(file);
 }
-async function handleNewUpload(file: File){
-// 上传新的文件
+async function handleNewUpload(file: File) {
+  console.log("处理新上传文件触发", file);
+  // 上传新的文件
   const uploader = useUploader();
-// 1. 创建一个虚拟draft项，默认选中这个草稿，在这个草稿下有uploadTask
+  // 1. 创建一个虚拟draft项，默认选中这个草稿，在这个草稿下有uploadTask
   const tempDraft = {
     draftData: {
-      id: -1, // 临时id，后端返回后需要更新
+      id: `temp-${Date.now()}`, // 临时id，后端返回后需要更新
       title: file.name,
     },
     uploadTask: {
       title: file.name,
-      progress: uploader.progress.value,
-      status: uploader.uploadStatus.value,
+      progress: uploader.progress,
+      status: uploader.uploadStatus,
     }
   };
- drafts.value.push(tempDraft);
- selectDraft(tempDraft.draftData.id);
+  console.log("已创建临时草稿项", tempDraft);
+  drafts.value.push(tempDraft);
+  selectDraft(tempDraft.draftData.id);
   // 2. 文件上传
   const uploadedPath = await uploader.upload(file, FileUploadTypeEnum.Video);
   // 2. apiCreateDraft
   try {
     const created = await apiCreateDraft(uploadedPath, file.name);
+    console.log("创建草稿成功", created);
     // 后端返回草稿id后更新draftData.id
     tempDraft.draftData.id = created.id;
     selectDraft(tempDraft.draftData.id);
@@ -197,7 +229,7 @@ async function handleNewUpload(file: File){
   }
 }
 
-function onCoverChange(){
+function onCoverChange() {
 
 }
 </script>

@@ -69,19 +69,23 @@ const router = useRouter();
   top: 0;
   z-index: 100;
 }
+
 .left {
   display: flex;
   align-items: center;
 }
+
 .left .header-link {
   margin-left: 16px;
   color: #333;
   text-decoration: none;
   cursor: pointer;
 }
+
 .right {
   margin-left: auto;
 }
+
 .logo {
   font-weight: 700;
   font-size: 18px;
@@ -96,20 +100,24 @@ const router = useRouter();
   border-right: 1px solid #e6e6e6;
   padding-top: 24px;
 }
+
 .sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .sidebar li {
   margin: 12px 0;
 }
+
 .sidebar a {
   text-decoration: none;
   padding: 10px 24px;
   display: block;
   color: #333;
 }
+
 .router-link-active {
   font-weight: bold;
   color: #00aaff;

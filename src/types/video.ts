@@ -14,7 +14,7 @@ export interface VideoDataStatVO {
 }
 // 视频列表卡片VO
 export interface VideoDataCardVO {
-  id: number
+  id: string
   title: string
   coverUrl?: string
   duration?: number
@@ -23,8 +23,8 @@ export interface VideoDataCardVO {
   owner?: any
 }
 // 视频草稿信息VO  // 更新视频信息DTO
-export interface VideoData {
-  id: number | any
+export interface DraftData {
+  id: string
   title: string
   introduction?: string
   coverUrl?: string
@@ -35,7 +35,7 @@ export interface VideoData {
 }
 // 视频播放页详情VO
 export interface VideoDataDetailVO {
-  id: number
+  id: string
   title: string
   introduction?: string
   coverUrl?: string
@@ -79,11 +79,11 @@ export interface VideoQuery {
   updateTimeMin?: string
   updateTimeMax?: string
 }
-// =============== Model 数据模型 ================
+// =============== Model 数据模型 ============
 // 草稿数据模型
 export interface DraftModel{
-  draftData: VideoData
-  uploadTask: UploadTaskModel; // 前端专用
+  draftData: DraftData
+  uploadTask: Ref<UploadTaskModel>; // 前端专用
 }
 
 // ================ Enum 枚举 ================

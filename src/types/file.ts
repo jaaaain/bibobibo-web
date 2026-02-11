@@ -4,7 +4,7 @@ export interface InitUploadDto {
 	fileName: string
 	fileSize: number
 	fileMd5: string
-    type: FileUploadTypeEnum
+	type: FileUploadTypeEnum
 }
 // ================ VO 响应数据 ================
 // 初始化上传响应数据
@@ -27,18 +27,18 @@ export interface UploadResultVO {
 // =============== Model 数据模型 ================
 // 上传任务数据模型
 export interface UploadTaskModel {
-  title: string
-  progress: number
-  status: UploadStatus
+	title: string
+	progress: Ref<number>
+	status: Ref<UploadStatus>
 }
 // ================ Enum 枚举 ================
 // 文件上传类型枚举
 export enum FileUploadTypeEnum {
-	File = "file",   // 文件
-	Video = "video",   // 视频
-	Picture = "picture", // 图片
-	Avatar = "avatar", // 头像
-	Cover = "cover"   // 封面
+	File = 'FILE',   // 文件
+	Video = 'VIDEO',   // 视频
+	Picture = 'PICTURE', // 图片
+	Avatar = 'AVATAR', // 头像
+	Cover = 'COVER'   // 封面
 }
 // 上传状态枚举
 export enum UploadStatus {

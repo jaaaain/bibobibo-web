@@ -10,5 +10,8 @@ export const apiFinishUpload = async (uploadId: string): Promise<UploadResultVO>
 }
 
 export const apiUpload = async (file: File, type: FileUploadTypeEnum): Promise<UploadResultVO> => {
-  return await post<UploadResultVO>('/file/upload/upload', { file: file, type: type })
+  const form = new FormData()
+  form.append('file', file)
+  form.append('type', type)
+  return await post<UploadResultVO>('/file/upload/upload', form)
 }
