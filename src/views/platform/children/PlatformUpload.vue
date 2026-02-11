@@ -5,7 +5,7 @@
       <div class="video-up">
         <div class="upload-header">发布视频</div>
         <!-- 上传区 -->
-        <div v-if="uploadTasks.length === 0" class="upload-drop" @drop.prevent="onDrop" @dragover.prevent>
+        <div v-if="drafts.length === 0" class="upload-drop" @drop.prevent="onDrop" @dragover.prevent>
           <div class="upload-inner">
             <div class="upload-icon" aria-hidden="true">
               <svg t="1766312771695" class="icon" viewBox="0 0 1024 1024" version="1.1"
@@ -25,27 +25,27 @@
         <!-- 上传队列 -->
         <div v-else class="upload-queue">
           <!-- 草稿项目列表 -->
-          <div class="task-list">
-            <div v-for="(t, idx) in uploadTasks" :key="idx" :class="['task-list-item', { selected: idx === selectedIndex }]"
-              @click="selectTask(idx)">
-              <div class="task-title">{{ t.title }}</div>
+          <div class="draft-list">
+            <div v-for="draft in drafts" :key="draft.draftData.id"
+              :class="['draft-list-item', { selected: draft.draftData.id === selectedId }]" @click="selectDraft(draft.draftData.id)">
+              <div class="draft-title">{{ draft.draftData.title }}</div>
             </div>
           </div>
           <button class="add-btn">添加分p</button>
-          <!-- 上传文件列表 -->
+          <!-- 上传文件列表, 目前不支持分p功能, 只有一条 uploadTask -->
           <div class="file-list">
             <div class="file-list-item">
               <div class="file-item-icon"></div>
               <div class="file-item-content">
                 <div class="file-item-content-detail">
-                  <div class="title">{{ selectedTask.title }}</div>
+                  <div class="title">{{ selectedUploadTask.title }}</div>
                   <div class="status">上传完成</div>
                 </div>
                 <div class="file-item-content-progress">
                   <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: selectedTask.progress + '%' }"></div>
+                    <div class="progress-fill" :style="{ width: (selectedUploadTask?.progress ?? 100) + '%' }"></div>
                   </div>
-                  <div class="progress-text">{{ selectedTask.progress }}%</div>
+                  <div class="progress-text">{{ selectedUploadTask?.progress ?? 100 }}%</div>
                 </div>
               </div>
             </div>
@@ -54,28 +54,25 @@
       </div>
 
       <!-- 基本设置 -->
-      <div class="form">
+  <div class="form" v-if="selectedId !== null">
         <div class="panel">
           <h3>基本设置</h3>
-          <div v-if="!selectedTask" class="empty">
-            请选择左侧任务或先上传视频
-          </div>
-
-          <form v-else @submit.prevent="submitTask">
+          
+          <form @submit.prevent="publishVideo">
             <div class="form-row">
               <label>封面</label>
               <input type="file" accept="image/*" @change="onCoverChange" />
-              <img v-if="coverPreview" :src="coverPreview" class="cover-preview" />
+              <img v-if="editDraft.coverUrl" :src="editDraft.coverUrl" class="cover-preview" />
             </div>
 
             <div class="form-row">
               <label>标题</label>
-              <input v-model="selectedTask.title" placeholder="请输入视频标题" />
+              <input v-model="editDraft.title" placeholder="请输入视频标题" />
             </div>
 
             <div class="form-row">
               <label>简介</label>
-              <textarea v-model="selectedTask.introduction" rows="4" placeholder="视频简介（选填）"></textarea>
+              <textarea v-model="editDraft.introduction" rows="4" placeholder="视频简介（选填）"></textarea>
             </div>
 
             <div class="form-actions">
@@ -89,48 +86,73 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
-import type { InitUploadDto, InitUploadVO, FinishVO, UploadTaskModel } from "@/types/file";
-import { apiInitUpload, apiFinishUpload, apiUpload } from "@/api/file";
-import { sv } from "element-plus/es/locale";
+import { ref, computed, onMounted } from "vue";
 import { apiGetMyDraftVideoList } from "@/api/platform";
-import type { Video } from "@/types/video";
-import { FileUploadStateEnum, FileUploadTypeEnum, UploadStatus } from "@/types/file";
-import { SparkMD5 } from 'spark-md5';
+import { apiCreateDraft, apiUpdateVideo, apiPublishVideo, apiDeleteVideo } from "@/api/video";
+import type { DraftModel, VideoData } from "@/types/video";
+import {useUploader} from "@/hooks/fileUploader";
+import { FileUploadTypeEnum, UploadStatus } from "@/types/file";
 
 // tasks 既显示已有草稿（Video）
-const uploadTasks = ref<Array<UploadTaskModel>>([])
-const loading = ref(false)
-const selectedIndex = ref<number | null>(null);
-const coverPreview = ref<string | null>(null);
+const loading = ref<boolean>(false); // 加载状态
+const drafts = ref<Array<DraftModel>>([]); // 当前用户的草稿列表
+const selectedId = ref<number | null>(null); // 选中的草稿索引
+const editDraft = ref<VideoData | null>(null)
 
 // ===================== 草稿项目相关方法 =====================
-// 获取草稿项目列表
-const loadTasks = async () => {
+// 获取草稿列表
+const loadDrafts = async () => {
   loading.value = true
   try {
-    uploadTasks.value = await apiGetMyDraftVideoList()
-    console.log("加载草稿", uploadTasks.value)
+    drafts.value = await apiGetMyDraftVideoList()
+    console.log("加载草稿列表", drafts.value)
+    if (drafts.value.length > 0 && !selectedId.value) { // 有草稿且未选中任何草稿
+      selectDraft(drafts.value[0].draftData.id);
+    }
   } finally {
     loading.value = false
   }
 }
-onMounted(loadTasks)
-// 选中的草稿项目
-const selectedTask = computed(() =>
-  selectedIndex.value === null ? null : (uploadTasks.value[selectedIndex.value] as UploadTaskModel)
-);
-// 选择草稿项目
-function selectTask(idx: number) {
-  selectedIndex.value = idx;
+onMounted(loadDrafts)
+const selectedUploadTask = computed(() => drafts.value.find(d => d.draftData.id === selectedId.value)?.uploadTask ?? null)
+// 选择草稿
+function selectDraft(id: number) {
+  selectedId.value = id;
+  editDraft.value = drafts.value.find(d => d.draftData.id === id)?.draftData ?? null;
 }
-// 删除草稿项目
-function deleteTask(idx: number) {
-  uploadTasks.value.splice(idx, 1);
-  if (selectedIndex.value !== null) {
-    if (idx === selectedIndex.value)
-      selectedIndex.value = uploadTasks.value.length ? 0 : null;
-    else if (idx < selectedIndex.value) selectedIndex.value!--;
+// 删除草稿
+async function deleteDraft(id: number) {
+  if (!confirm("确定要删除这个草稿吗？")) return;
+  try {
+    await apiDeleteVideo(id);
+    if (selectedId.value === id) { // 删除了当前选中的草稿
+      selectedId.value = null;
+      editDraft.value = null;
+    }
+    await loadDrafts();
+  } catch (err) {
+    console.error('删除草稿失败', err);
+  }
+}
+// 更新草稿
+async function updateDraft() {
+  if (!editDraft.value) return;
+  try {
+    await apiUpdateVideo(editDraft.value);
+  } catch (err) {
+    console.error('保存草稿失败', err);
+  }
+}
+// 发布/保存草稿
+async function publishVideo() {
+  if (!editDraft.value) return;
+
+  try {
+    await apiUpdateVideo(editDraft.value);
+    await apiPublishVideo(editDraft.value.id); 
+    await loadDrafts();
+  } catch (err) {
+    console.error('保存草稿失败', err);
   }
 }
 // ===================== 文件上传相关方法 =====================
@@ -138,109 +160,45 @@ function deleteTask(idx: number) {
 function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
   if (!input.files || !input.files[0]) return;
-  handleNewTask(input.files[0]);
+  handleNewUpload(input.files[0]);
 }
 function onDrop(e: DragEvent) {
   if (!e.dataTransfer) return;
   const file = e.dataTransfer.files[0];
-  if (file) handleNewTask(file);
+  if (file) handleNewUpload(file);
 }
-
-// 处理文件上传相关任务：创建客户端任务对象并入队，再异步上传
-function handleNewTask(file: File) {
-  // 简单校验文件类型
-  if (!file.type.startsWith("video/")) {
-    alert("仅支持视频文件");
-    return;
-  }
-
-  const t: UploadTaskModel = {
-    title: file.name,
-    file,
-    progress: 0,
-    status: UploadStatus.Idle
-  };
-
-  // 草稿项目新增（显示在列表中）
-  uploadTasks.value.push(t);
-  // 选中新上传的草稿项目
-  selectedIndex.value = uploadTasks.value.length - 1;
-
-  // 异步开始上传（不阻塞 UI）
-  uploadFile(t);
-}
-// 上传视频文件
-async function uploadFile(t: UploadTaskModel) {
-  const file = t.file;
-  // 1. 判断文件大小（小于20MB直接上传，大于20MB分片上传）
-  if (file.size < 20 * 1024 * 1024) {
-    // 直接上传
-    const url = await apiUpload(file, FileUploadTypeEnum.Video);
-    t.status = UploadStatus.Done;
-    t.remotePath = url;
-    t.progress = 100;
-  }else {
-    // 大于20MB分片上传
-    // 1. 构建 DTO
-    const dto: InitUploadDto = {
-      fileName: file.name,
-      fileSize: file.size,
-      fileMd5: SparkMD5.ArrayBuffer.hash(await file.arrayBuffer()),
-      type: FileUploadTypeEnum.Video,
-    };
-    try {
-      // 2. 调用 apiInitUpload 获取预签名等信息
-      const vo = (await apiInitUpload(dto)) as InitUploadVO;
-      if(vo.state === FileUploadStateEnum.Completed){
-        // 文件已存在，直接标记完成
-        t.status = UploadStatus.Done;
-        t.progress = 100;
-        t.remotePath = vo.path;
-        return;
-      }
-      t.uploadId = vo.uploadId;
-      t.status = UploadStatus.Uploading; // 上传中
-      const partUrls = vo.partUrls || []; // 分片url列表
-      const chunkSize = vo.chunkSize;
-      // 3. 逐分片上传
-      for (let i = 0; i < partUrls.length; i++) {
-        // 3.1 截取文件分片
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const part = file.slice(start, end);
-        const url = partUrls[i];
-        // 3.2 上传分片到预签名 URL（PUT）
-        const resp = await fetch(url, { method: "PUT", body: part });
-        if (!resp.ok) throw new Error("上传分片失败:" + resp.status);
-        // 3.3 更新进度
-        t.progress = Math.floor(((i + 1) / partUrls.length) * 100);
-      }
-      // 4. 调用 apiFinishUpload 合并分片
-      const finish = (await apiFinishUpload(t.uploadId!)) as FinishVO;
-      t.status = UploadStatus.Done; // 上传完成
-      t.progress = 100;
-      t.remotePath = finish.path;
-    } catch (err) {
-      console.error(err);
-      t.status = UploadStatus.Error; // 上传出错
+async function handleNewUpload(file: File){
+// 上传新的文件
+  const uploader = useUploader();
+// 1. 创建一个虚拟draft项，默认选中这个草稿，在这个草稿下有uploadTask
+  const tempDraft = {
+    draftData: {
+      id: -1, // 临时id，后端返回后需要更新
+      title: file.name,
+    },
+    uploadTask: {
+      title: file.name,
+      progress: uploader.progress.value,
+      status: uploader.uploadStatus.value,
     }
+  };
+ drafts.value.push(tempDraft);
+ selectDraft(tempDraft.draftData.id);
+  // 2. 文件上传
+  const uploadedPath = await uploader.upload(file, FileUploadTypeEnum.Video);
+  // 2. apiCreateDraft
+  try {
+    const created = await apiCreateDraft(uploadedPath, file.name);
+    // 后端返回草稿id后更新draftData.id
+    tempDraft.draftData.id = created.id;
+    selectDraft(tempDraft.draftData.id);
+  } catch (err) {
+    console.error('创建草稿失败', err);
   }
 }
-// 选择封面图片
-function onCoverChange(e: Event) {
-  const input = e.target as HTMLInputElement;
-  if (!input.files || !input.files[0] || !selectedTask.value) return;
-  const f = input.files[0];
-  const url = URL.createObjectURL(f);
-  coverPreview.value = url;
-  (selectedTask.value as any).cover = f;
-}
-// 提交投稿
-async function submitTask() {
-  if (!selectedTask.value) return;
-  // 这里可调用后端发布接口（尚未实现），当前仅打印信息
-  console.log("提交投稿", selectedTask.value);
-  alert("已提交（示例）");
+
+function onCoverChange(){
+
 }
 </script>
 
@@ -345,12 +303,12 @@ async function submitTask() {
   background-color: #f9f9f9;
 }
 
-.task-list {
+.draft-list {
   height: 70px;
   display: flex;
 }
 
-.task-list-item {
+.draft-list-item {
   width: 218px;
   padding: 10px 6px 10px 12px;
   margin-right: 8px;
@@ -359,7 +317,7 @@ async function submitTask() {
   cursor: pointer;
 }
 
-.task-title {
+.draft-title {
   font-size: 14px;
   line-height: 16px;
 }

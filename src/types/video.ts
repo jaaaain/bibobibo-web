@@ -1,14 +1,7 @@
+import { UUID } from "crypto"
+import { UploadTaskModel } from "./file"
 // ================ DTO 请求参数 ================
-// 更新视频信息DTO
-export interface VideoUpdateDto {
-  id: number
-  title?: string
-  introduction?: string
-  coverUrl?: string
-  tags?: string
-  type?: VideoType
-  visible?: VideoVisible
-}
+
 // ================ VO 响应数据 ================
 // 视频数据统计VO
 export interface VideoDataStatVO {
@@ -21,17 +14,17 @@ export interface VideoDataStatVO {
 }
 // 视频列表卡片VO
 export interface VideoDataCardVO {
-  id: string
+  id: number
   title: string
   coverUrl?: string
   duration?: number
   releaseTime?: string
-  stat?: VideoDataStatVO
+  stat?: VideoDataStatVO // 统计信息VO
   owner?: any
 }
-// 视频草稿信息VO
-export interface VideoDraftVO {
-  id: string
+// 视频草稿信息VO  // 更新视频信息DTO
+export interface VideoData {
+  id: number | any
   title: string
   introduction?: string
   coverUrl?: string
@@ -42,7 +35,7 @@ export interface VideoDraftVO {
 }
 // 视频播放页详情VO
 export interface VideoDataDetailVO {
-  id: string
+  id: number
   title: string
   introduction?: string
   coverUrl?: string
@@ -53,7 +46,7 @@ export interface VideoDataDetailVO {
   state?: VideoState
   releaseTime?: string
   duration?: number
-  statVO?: VideoDataStatVO
+  statVO?: VideoDataStatVO // 统计信息VO
   owner?: any
 }
 // 视频关联关系VO
@@ -87,8 +80,11 @@ export interface VideoQuery {
   updateTimeMax?: string
 }
 // =============== Model 数据模型 ================
-
-
+// 草稿数据模型
+export interface DraftModel{
+  draftData: VideoData
+  uploadTask: UploadTaskModel; // 前端专用
+}
 
 // ================ Enum 枚举 ================
 // 视频来源枚举

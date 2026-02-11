@@ -17,9 +17,9 @@ export interface InitUploadVO {
 	path: string
 }
 // 完成上传响应数据
-export interface FinishVO {
-	etag: string
-	path: string
+export interface UploadResultVO {
+	etag?: string
+	path?: string
 }
 // ================ Query 查询条件 ================
 
@@ -28,18 +28,14 @@ export interface FinishVO {
 // 上传任务数据模型
 export interface UploadTaskModel {
   title: string
-  file: File
   progress: number
   status: UploadStatus
-  uploadId?: string
-  remotePath?: string
 }
 // ================ Enum 枚举 ================
 // 文件上传类型枚举
 export enum FileUploadTypeEnum {
 	File = "file",   // 文件
 	Video = "video",   // 视频
-	Chunk = "chunk",   // 分片
 	Picture = "picture", // 图片
 	Avatar = "avatar", // 头像
 	Cover = "cover"   // 封面

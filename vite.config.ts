@@ -4,22 +4,35 @@ import { resolve } from 'path'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      imports: ["vue", "vue-router", "@vueuse/core"],
+      imports: [
+        'vue',
+        'vue-router',
+        '@vueuse/core',
+        {
+          'naive-ui': [
+            'useDialog',
+            'useMessage',
+            'useNotification',
+            'useLoadingBar'
+          ]
+        }
+      ],
       resolvers: [ElementPlusResolver()],
       dts: "src/auto-imports.d.ts"
     }),
     // 自动导入组件
     Components({
       dirs: ['src/components'], // 自动扫描你的组件目录
-      resolvers: [ElementPlusResolver()], // UI 框架自动按需引入
+      resolvers: [ElementPlusResolver(),NaiveUiResolver()], // UI 框架自动按需引入
       extensions: ['vue'],
-      dts: 'src/components.d.ts'
+      dts: 'src/components.d.ts',
     })],
 
   server: {

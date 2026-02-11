@@ -1,20 +1,23 @@
 import { get, post, del } from "@/utils/request"
 import type { PageResult } from "@/types/common"
-import type { VideoDataCardVO, VideoDataDetailVO, VideoDraftVO, VideoQuery, VideoUpdateDto } from "@/types/video"
+import type { VideoDataCardVO, VideoDataDetailVO, VideoData, VideoQuery } from "@/types/video"
 
 // 获取视频详情
 export const apiGetVideoById = async (id: number): Promise<VideoDataDetailVO> => {
   return await get<VideoDataDetailVO>(`/video/${id}`)
 }
 
-// 创建草稿（后端接口使用 RequestParam：url, title, fileKey）
-export const apiCreateDraft = async (url: string, title: string, fileKey: string): Promise<VideoDraftVO> => {
-  const params = new URLSearchParams({ url, title, fileKey }).toString()
-  return await post<VideoDraftVO>(`/video/create-draft?${params}`)
+// 创建草稿
+export const apiCreateDraft = async (url: string, title: string): Promise<VideoData> => {
+  return await post<VideoData>(`/video/create-draft`, { url, title })
+}
+// 获取草稿信息
+export const apiGetDraftById = async (id: number): Promise<VideoData> => {
+  return await get<VideoData>(`/video/draft/${id}`)
 }
 
-// 更新视频信息（RequestBody）
-export const apiUpdateVideo = async (dto: VideoUpdateDto): Promise<void> => {
+// 更新视频信息
+export const apiUpdateVideo = async (dto: VideoData): Promise<void> => {
   return await post<void>(`/video/update`, dto)
 }
 
