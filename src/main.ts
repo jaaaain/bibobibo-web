@@ -5,6 +5,7 @@ import router from './router/index'
 import { createPinia } from 'pinia'
 import { useUserStore } from '@/store/index'
 import ElementPlus from 'element-plus'
+import '@/assets/css/global.css'
 
 const app = createApp(App)
 const pinia = createPinia()

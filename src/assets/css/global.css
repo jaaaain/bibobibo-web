@@ -1,0 +1,9 @@
+.app-header {
+  width: 100%;
+  position: sticky;   /* 粘性头部 */
+  top: 0;
+  z-index: 1000;
+  background: var(--el-color-white, #fff);
+  /* 可选：添加轻微阴影以区分主内容 */
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}

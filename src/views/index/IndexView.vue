@@ -6,7 +6,7 @@
 
     <main class="app-main">
       <div v-for="v in list" :key="v.id" class="video-card">
-        <RouterLink :to="`/video/${v.id}`">{{ v.title }}</RouterLink>
+        <RouterLink :to="`/player/video/${v.id}`">{{ v.title }}</RouterLink>
       </div>
     </main>
   </div>
@@ -15,9 +15,9 @@
 
 <script setup lang="ts">
 import { apiGetVideoPage } from "@/api/video"
-import type { Video } from "@/types/video"
+import type { VideoDataCardVO } from "@/types/video"
 
-const list = ref<Video[]>([])
+const list = ref<VideoDataCardVO[]>([])
 const total = ref(0)
 onMounted(async () => {
   const res = await apiGetVideoPage(1, 10)
