@@ -4,7 +4,7 @@
       <div class="logo">Bibobibo</div>
       <nav class="left-entry">
         <ul>
-          <li>首页</li>
+          <li><router-link style="color: #000;" to="/">首页</router-link></li>
           <li>番剧</li>
           <li>直播</li>
           <li>游戏中心</li>

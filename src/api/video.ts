@@ -3,7 +3,7 @@ import type { PageResult } from "@/types/common"
 import type { VideoDataCardVO, VideoDataDetailVO, DraftData, VideoQuery } from "@/types/video"
 
 // 获取视频详情
-export const apiGetVideoById = async (id: string): Promise<VideoDataDetailVO> => {
+export const apiGetVideoById = async (id: number): Promise<VideoDataDetailVO> => {
   return await get<VideoDataDetailVO>(`/video/${id}`)
 }
 

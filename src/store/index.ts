@@ -39,17 +39,3 @@ export const useUserStore = defineStore('user', {
   }
 })
 
-export const useUploadStore = defineStore('upload', {
-  state: () => ({
-    uploadId: '',
-    file: null as File | null,
-    progress: 0,
-    status: 'idle' as UploadStatus,
-    uploadedParts: new Set<number>(),
-  }),
-  actions: {
-    setUploadProgress(progress: number) {
-      this.uploadProgress = progress
-    }
-  }
-})

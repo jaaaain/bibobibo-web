@@ -1,28 +1,24 @@
 <template>
   <el-dialog v-model="dialogVisible" width="720px" :show-close="false" class="login-dialog">
-<!-- ======================= header ======================= -->
+    <!-- ======================= header ======================= -->
     <template #header="{ close }">
       <div class="header">
         <div class="title">登录</div>
-        <el-icon @click="close" class="close-icon"><Close /></el-icon>
+        <el-icon @click="close" class="close-icon">
+          <Close />
+        </el-icon>
       </div>
     </template>
-<!-- ======================= content ======================= -->
+    <!-- ======================= content ======================= -->
     <div class="content">
       <!-- ======== 左侧二维码 ======== -->
       <div class="qr-section">
         <div class="qr-title">扫描二维码登录</div>
-        <el-image
-          style="width: 160px; height: 160px; border: 1px solid #eee"
-          :src="qrUrl"
-          fit="cover"
-        />
+        <el-image style="width: 160px; height: 160px; border: 1px solid #eee" :src="qrUrl" fit="cover" />
         <div class="qr-desc">
           <p>
             请使用
-            <a href="https://app.bilibili.com/" target="_blank"
-              >哔哩哔哩客户端</a
-            >
+            <a href="https://app.bilibili.com/" target="_blank">哔哩哔哩客户端</a>
           </p>
           <p>扫码登录或扫码下载APP</p>
         </div>
@@ -46,19 +42,13 @@
             </el-form-item>
 
             <el-form-item label="密码">
-              <el-input
-                v-model="form.password"
-                placeholder="请输入密码"
-                show-password
-              />
+              <el-input v-model="form.password" placeholder="请输入密码" show-password />
             </el-form-item>
           </el-form>
 
           <div class="btn-wrap">
             <el-button type="info" text>注册</el-button>
-            <el-button type="primary" :disabled="!canLogin" @click="login"
-              >登录</el-button
-            >
+            <el-button type="primary" :disabled="!canLogin" @click="login">登录</el-button>
           </div>
         </div>
 
@@ -90,7 +80,7 @@
         </div>
       </div>
     </div>
-<!-- ======================= footer ======================= -->
+    <!-- ======================= footer ======================= -->
     <template #footer>
       <div class="footer">
         登录或完成注册即代表你同意
@@ -107,6 +97,7 @@ import { ref, computed } from "vue";
 import { apiGetUserSimple, apiLogin } from "@/api/user";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/store";
+import { c } from "naive-ui";
 
 // 外部控制属性
 const props = defineProps({ // properties 单向数据流，父组件->子组件
@@ -139,20 +130,19 @@ const canLogin = computed(() => {
 
 const login = async () => {
   const { username, password } = form.value;
-  try{
+  try {
     const res = await apiLogin(username, password);
     console.log("登录成功，token：", res);
     localStorage.setItem("token", res);
     emit("success", res);
-    useUserStore().isLogin = true;
-
-  }catch (error) {
-    ElMessage.error("账号或密码错误"); 
-  }
     const userSimple = await apiGetUserSimple();
-    useUserStore().user = userSimple;
-    dialogVisible.value = false;
+    useUserStore().setUser(userSimple);
+    console.log("用户信息：", userSimple);
 
+  } catch (error) {
+    ElMessage.error("账号或密码错误");
+  }
+  dialogVisible.value = false;
 };
 </script>
 

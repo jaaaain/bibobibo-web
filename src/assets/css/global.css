@@ -7,3 +7,15 @@
   /* 可选：添加轻微阴影以区分主内容 */
   box-shadow: 0 1px 6px rgba(0,0,0,0.06);
 }
+
+.app-main {
+  padding: 22px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center; /* 内容居中 */
+}
+
+.card {
+  border: 1px solid #e3e5e7;
+}

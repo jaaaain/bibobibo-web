@@ -1,13 +1,12 @@
 <template>
-  <div class="video-page-container">
     <header class="app-header">
       <HeaderBar />
     </header>
 
-    <div class="main-layout">
+    <div class="app-main">
       
       <main class="left-container">
-        <div class="video-player-wrapper">
+        <div class="player-wrapper">
           <router-view />
         </div>
 
@@ -35,30 +34,16 @@
       </aside>
 
     </div>
-  </div>
 </template>
 
 <script setup lang="ts"> 
 </script>
 
 <style scoped>
-/* 1. 页面整体容器 */
-.video-page-container {
-  min-height: 100vh;
-  background-color: #f4f5f7; /* B站常用背景色 */
-}
-
 /* 3. 核心布局容器 */
-.main-layout {
-  /* 核心逻辑：Flex布局 */
-  display: flex;
-  justify-content: center; /* 内容居中 */
-  align-items: flex-start; /* 关键：顶部对齐，防止子元素默认拉伸高度，这对 sticky 很重要 */
-  
-  /* 宽度计算：862 + 350 + 30 = 1242px */
-  width: 1242px; 
-  margin: 20px auto; /* 上下留白，左右居中 */
-  gap: 30px; /* 替代 margin-left，Flex gap 更现代 */
+.app-main {
+  align-items: flex-start; /* 顶部对齐，防止子元素默认拉伸高度(sticky) */
+  gap: 30px;
 }
 
 /* 4. 左侧区域 */
@@ -70,7 +55,8 @@
 
 /* 5. 右侧区域 */
 .right-container {
-  width: 350px;
+  width: 411px;
+  min-width: 250px;
   flex-shrink: 0;
 }
 

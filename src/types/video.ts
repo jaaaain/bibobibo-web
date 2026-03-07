@@ -14,7 +14,7 @@ export interface VideoDataStatVO {
 }
 // 视频列表卡片VO
 export interface VideoDataCardVO {
-  id: string
+  id: number
   title: string
   coverUrl?: string
   duration?: number
@@ -24,7 +24,7 @@ export interface VideoDataCardVO {
 }
 // 视频草稿信息VO  // 更新视频信息DTO
 export interface DraftData {
-  id: string
+  id: number
   title: string
   introduction?: string
   coverUrl?: string
@@ -35,7 +35,7 @@ export interface DraftData {
 }
 // 视频播放页详情VO
 export interface VideoDataDetailVO {
-  id: string
+  id: number
   title: string
   introduction?: string
   coverUrl?: string
