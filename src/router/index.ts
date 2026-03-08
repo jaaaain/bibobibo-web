@@ -4,7 +4,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", component: () => import('@/views/index/IndexView.vue') },
-    { path: "/login", component: () => import('@/views/LoginView.vue') },
+    // { path: "/login", component: () => import('@/views/LoginView.vue') },
 
     // 消息中心
     {
@@ -39,7 +39,7 @@ const router = createRouter({
       path: '/player',
       component: () => import('@/views/player/PlayerView.vue'),
       children: [
-        { path: 'bangumi/:id', component: () => import('@/views/player/children/PlayerBangumi.vue') },
+        // { path: 'bangumi/:id', component: () => import('@/views/player/children/PlayerBangumi.vue') },
         { path: 'video/:id', component: () => import('@/views/player/children/PlayerVideo.vue') }
       ]
     },
