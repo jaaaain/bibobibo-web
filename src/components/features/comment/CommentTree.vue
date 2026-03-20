@@ -59,8 +59,17 @@
           :reply-page="getReplyState(comment.id).page"
           :reply-page-size="replyPageSize"
           :reply-total="getReplyTotal(comment)"
+          :active-reply-id="activeReplyId"
+          :reply-draft="replyDraft"
+          :reply-submitting="replySubmitting"
           @toggle-replies="toggleReplies"
           @change-reply-page="changeReplyPage"
+          @toggle-like="toggleLike"
+          @toggle-dislike="toggleDislike"
+          @request-reply="openReplyEditor"
+          @update-reply-draft="updateReplyDraft"
+          @submit-reply="submitReply"
+          @cancel-reply="closeReplyEditor"
         />
       </div>
 
@@ -86,7 +95,16 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { apiCreateComment, apiGetCommentCount, apiGetReplies, apiGetRootComments } from '@/api/comment'
+import {
+  apiCancelDislikeComment,
+  apiCancelLikeComment,
+  apiCreateComment,
+  apiDislikeComment,
+  apiGetCommentCount,
+  apiGetReplies,
+  apiGetRootComments,
+  apiLikeComment
+} from '@/api/comment'
 import Comment from '@/components/features/comment/Comment.vue'
 import { useUserStore } from '@/store'
 import type { CommentVO } from '@/types/comment'
@@ -112,10 +130,13 @@ const commentCount = ref(0)
 const initialLoading = ref(false)
 const loadingMore = ref(false)
 const submitting = ref(false)
+const replySubmitting = ref(false)
 const hasMore = ref(false)
 const nextCursor = ref<string | number | undefined>(undefined)
 const sortType = ref('hot')
 const draftContent = ref('')
+const replyDraft = ref('')
+const activeReplyId = ref<number | null>(null)
 const replyPageSize = 5
 
 const replyStates = reactive<Record<number, ReplyState>>({})
@@ -135,6 +156,7 @@ watch(
       rootComments.value = []
       commentCount.value = 0
       clearReplies()
+      closeReplyEditor()
       return
     }
     void resetAndLoad()
@@ -144,6 +166,7 @@ watch(
 
 async function resetAndLoad() {
   clearReplies()
+  closeReplyEditor()
   nextCursor.value = undefined
   hasMore.value = false
   rootComments.value = []
@@ -237,10 +260,7 @@ async function submitComment() {
     message.warning('先写点内容再发布吧')
     return
   }
-  if (!userStore.isLogin) {
-    message.warning('请先登录后再评论')
-    return
-  }
+  if (!assertLogin()) return
 
   submitting.value = true
   try {
@@ -256,6 +276,121 @@ async function submitComment() {
     message.error('评论发布失败')
   } finally {
     submitting.value = false
+  }
+}
+
+async function toggleLike(comment: CommentVO) {
+  if (!assertLogin()) return
+  const id = Number(comment.id)
+  if (!id) return
+
+  try {
+    if (comment.isLiked) {
+      await apiCancelLikeComment(id)
+      comment.isLiked = false
+      comment.likeCount = Math.max(0, Number(comment.likeCount || 0) - 1)
+      return
+    }
+
+    await apiLikeComment(id)
+    comment.isLiked = true
+    comment.isBad = false
+    comment.likeCount = Number(comment.likeCount || 0) + 1
+  } catch (error) {
+    console.error('toggle like failed', error)
+    message.error('点赞操作失败')
+  }
+}
+
+async function toggleDislike(comment: CommentVO) {
+  if (!assertLogin()) return
+  const id = Number(comment.id)
+  if (!id) return
+
+  try {
+    if (comment.isBad) {
+      await apiCancelDislikeComment(id)
+      comment.isBad = false
+      return
+    }
+
+    await apiDislikeComment(id)
+    if (comment.isLiked) {
+      comment.likeCount = Math.max(0, Number(comment.likeCount || 0) - 1)
+    }
+    comment.isLiked = false
+    comment.isBad = true
+  } catch (error) {
+    console.error('toggle dislike failed', error)
+    message.error('点踩操作失败')
+  }
+}
+
+function openReplyEditor(comment: CommentVO) {
+  if (!assertLogin()) return
+
+  activeReplyId.value = Number(comment.id || 0)
+  replyDraft.value = ''
+
+  const rootId = Number(comment.rootId || comment.id || 0)
+  if (rootId && rootId !== Number(comment.id || 0)) {
+    const rootComment = rootComments.value.find(item => Number(item.id) === rootId)
+    if (rootComment) {
+      const state = ensureReplyState(rootId, Number(rootComment.replyCount || 0))
+      state.expanded = true
+      if (!state.loaded) {
+        void loadReplies(rootComment, 1)
+      }
+    }
+  }
+}
+
+function updateReplyDraft(value: string) {
+  replyDraft.value = value
+}
+
+function closeReplyEditor() {
+  activeReplyId.value = null
+  replyDraft.value = ''
+}
+
+async function submitReply(target: CommentVO) {
+  const content = replyDraft.value.trim()
+  if (!content) {
+    message.warning('先写点内容再回复吧')
+    return
+  }
+  if (!assertLogin()) return
+
+  const targetId = Number(target.id)
+  const rootId = Number(target.rootId || target.id)
+  if (!targetId || !rootId) return
+
+  replySubmitting.value = true
+  try {
+    await apiCreateComment({
+      vid: props.vid,
+      rootId,
+      parentId: targetId,
+      toUid: target.user?.id,
+      content
+    })
+
+    const rootComment = rootComments.value.find(item => Number(item.id) === rootId)
+    if (rootComment) {
+      rootComment.replyCount = Number(rootComment.replyCount || 0) + 1
+      await loadReplies(rootComment, 1)
+    } else {
+      await resetAndLoad()
+    }
+
+    closeReplyEditor()
+    message.success('回复发送成功')
+  } catch (error) {
+    console.error('submit reply failed', error)
+    message.error('回复发送失败')
+  } finally {
+    replySubmitting.value = false
   }
 }
 
@@ -309,10 +444,16 @@ function normalizeRootList(list: unknown) {
   return Array.isArray(list) ? (list as CommentVO[]) : []
 }
 
+function assertLogin() {
+  if (userStore.isLogin) return true
+  message.warning('请先登录后再操作')
+  return false
+}
+
 function formatCount(value?: number) {
   const count = Number(value || 0)
   if (count >= 10000) {
-    return `${(count / 10000).toFixed(count >= 100000 ? 0 : 1).replace(/\.0$/, '')}w`
+    return `${(count / 10000).toFixed(count >= 100000 ? 0 : 1).replace(/\.0$/, '')}万`
   }
   return `${count}`
 }
@@ -376,6 +517,7 @@ function formatCount(value?: number) {
 
 .editor-main {
   flex: 1;
+  text-align: left;
 }
 
 .editor-actions {

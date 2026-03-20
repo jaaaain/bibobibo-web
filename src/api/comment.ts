@@ -47,6 +47,11 @@ export const apiDislikeComment = async (id: number): Promise<void> => {
   return await post<void>(`/comment/${id}/bad`)
 }
 
+// 取消点踩
+export const apiCancelDislikeComment = async (id: number): Promise<void> => {
+  return await post<void>(`/comment/${id}/cancel-bad`)
+}
+
 // 置顶评论（仅视频作者）
 export const apiTopComment = async (id: number): Promise<void> => {
   return await post<void>(`/comment/${id}/top`)

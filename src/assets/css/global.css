@@ -19,3 +19,7 @@
 .card {
   border: 1px solid #e3e5e7;
 }
+
+div {
+  text-align: left;
+}

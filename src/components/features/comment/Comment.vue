@@ -11,9 +11,7 @@
 
     <div class="comment-body">
       <div class="comment-head">
-        <span :class="authorClass">
-          {{ displayName }}
-        </span>
+        <span :class="authorClass">{{ displayName }}</span>
         <n-tag v-if="comment.isUpOwner" size="small" round type="error" class="comment-tag">
           UP
         </n-tag>
@@ -32,8 +30,68 @@
       <div class="comment-meta">
         <span>{{ formattedTime }}</span>
         <span v-if="comment.ipLocation">{{ comment.ipLocation }}</span>
-        <span class="action-text">点赞 {{ formatCount(comment.likeCount) }}</span>
-        <span class="action-text">回复</span>
+      </div>
+
+      <div class="comment-actions">
+        <button
+          type="button"
+          :class="comment.isLiked ? 'action-btn is-active' : 'action-btn'"
+          @click="emit('toggle-like', comment)"
+        >
+          <span class="action-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+              <path d="M7 10v12" />
+            </svg>
+          </span>
+          <span>{{ formatCount(comment.likeCount) }}</span>
+        </button>
+
+        <button
+          type="button"
+          :class="comment.isBad ? 'action-btn is-active is-bad' : 'action-btn'"
+          @click="emit('toggle-dislike', comment)"
+        >
+          <span class="action-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+              <path d="M17 14V2" />
+            </svg>
+          </span>
+          <span>点踩</span>
+        </button>
+
+        <button
+          type="button"
+          class="action-btn"
+          @click="emit('request-reply', comment)"
+        >
+          <span>回复</span>
+        </button>
+      </div>
+
+      <div v-if="isReplyEditorVisible" class="reply-editor">
+        <n-input
+          :value="replyDraft"
+          type="textarea"
+          :autosize="{ minRows: 2, maxRows: 4 }"
+          maxlength="500"
+          show-count
+          :placeholder="replyPlaceholder"
+          @update:value="handleReplyDraftChange"
+        />
+        <div class="reply-editor-actions">
+          <button type="button" class="editor-cancel" @click="emit('cancel-reply')">取消</button>
+          <n-button
+            type="primary"
+            color="#00aeec"
+            size="small"
+            :loading="replySubmitting"
+            @click="emit('submit-reply', comment)"
+          >
+            回复
+          </n-button>
+        </div>
       </div>
 
       <div v-if="showRepliesToggle" class="reply-toggle">
@@ -54,6 +112,15 @@
               :key="reply.id"
               :comment="reply"
               is-reply
+              :active-reply-id="activeReplyId"
+              :reply-draft="replyDraft"
+              :reply-submitting="replySubmitting"
+              @toggle-like="forwardToggleLike"
+              @toggle-dislike="forwardToggleDislike"
+              @request-reply="forwardRequestReply"
+              @update-reply-draft="forwardReplyDraftUpdate"
+              @submit-reply="forwardSubmitReply"
+              @cancel-reply="forwardCancelReply"
             />
           </div>
           <n-empty
@@ -96,6 +163,9 @@ const props = withDefaults(defineProps<{
   replyPage?: number
   replyPageSize?: number
   replyTotal?: number
+  activeReplyId?: number | null
+  replyDraft?: string
+  replySubmitting?: boolean
 }>(), {
   isReply: false,
   showRepliesToggle: false,
@@ -104,40 +174,76 @@ const props = withDefaults(defineProps<{
   replyList: () => [],
   replyPage: 1,
   replyPageSize: 5,
-  replyTotal: 0
+  replyTotal: 0,
+  activeReplyId: null,
+  replyDraft: '',
+  replySubmitting: false
 })
 
 const emit = defineEmits<{
   'toggle-replies': [comment: CommentVO]
   'change-reply-page': [comment: CommentVO, page: number]
+  'toggle-like': [comment: CommentVO]
+  'toggle-dislike': [comment: CommentVO]
+  'request-reply': [comment: CommentVO]
+  'update-reply-draft': [value: string]
+  'submit-reply': [comment: CommentVO]
+  'cancel-reply': []
 }>()
 
-const emptyContentText = 'No comment yet'
+const emptyContentText = '评论内容为空'
 const itemClass = computed(() => props.isReply ? 'comment-item is-reply' : 'comment-item')
 const authorClass = computed(() => props.comment.isUpOwner ? 'comment-author is-up-owner' : 'comment-author')
-const displayName = computed(() => props.comment.user?.nickname || `User ${props.comment.user?.id || ''}`)
+const displayName = computed(() => props.comment.user?.nickname || `用户 ${props.comment.user?.id || ''}`)
 const replyToName = computed(() => props.comment.replyToUser?.nickname || '')
-const avatarFallback = computed(() => displayName.value.slice(0, 1) || 'C')
+const avatarFallback = computed(() => displayName.value.slice(0, 1) || '评')
 const formattedTime = computed(() => formatTime(props.comment.createTime))
-const replyToggleText = computed(() => {
-  if (props.repliesExpanded) return '收起回复'
-  return `共 ${formatCount(props.comment.replyCount)} 条回复，点击查看`
-})
+const replyToggleText = computed(() => props.repliesExpanded ? '收起回复' : `共 ${formatCount(props.comment.replyCount)} 条回复，点击查看`)
+const isReplyEditorVisible = computed(() => Number(props.comment.id) === Number(props.activeReplyId || 0))
+const replyPlaceholder = computed(() => `回复 @${displayName.value}`)
 
 function handleReplyPageChange(page: number) {
   emit('change-reply-page', props.comment, page)
 }
 
+function handleReplyDraftChange(value: string) {
+  emit('update-reply-draft', value)
+}
+
+function forwardToggleLike(comment: CommentVO) {
+  emit('toggle-like', comment)
+}
+
+function forwardToggleDislike(comment: CommentVO) {
+  emit('toggle-dislike', comment)
+}
+
+function forwardRequestReply(comment: CommentVO) {
+  emit('request-reply', comment)
+}
+
+function forwardReplyDraftUpdate(value: string) {
+  emit('update-reply-draft', value)
+}
+
+function forwardSubmitReply(comment: CommentVO) {
+  emit('submit-reply', comment)
+}
+
+function forwardCancelReply() {
+  emit('cancel-reply')
+}
+
 function formatCount(value?: number) {
   const count = Number(value || 0)
   if (count >= 10000) {
-    return `${(count / 10000).toFixed(count >= 100000 ? 0 : 1).replace(/\.0$/, '')}w`
+    return `${(count / 10000).toFixed(count >= 100000 ? 0 : 1).replace(/\.0$/, '')}万`
   }
   return `${count}`
 }
 
 function formatTime(value?: string) {
-  if (!value) return 'just now'
+  if (!value) return '刚刚'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
@@ -219,14 +325,62 @@ function formatTime(value?: string) {
 
 .comment-actions {
   display: flex;
-  gap: 18px;
-  margin-top: 8px;
-  color: #9499a0;
-  font-size: 13px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
-.action-text {
-  cursor: default;
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #9499a0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #f6f7f8;
+  color: #18191c;
+}
+
+.action-btn.is-active {
+  color: #00aeec;
+}
+
+.action-btn.is-bad.is-active {
+  color: #00aeec;
+}
+
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.reply-editor {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f6f7f8;
+}
+
+.reply-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.editor-cancel {
+  border: none;
+  background: transparent;
+  color: #61666d;
+  cursor: pointer;
 }
 
 .reply-toggle {
