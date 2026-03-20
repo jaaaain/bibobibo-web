@@ -8,8 +8,8 @@ export const apiGetRootComments = async (params: {
   sortType?: string
   cursor?: string | number
   size?: number
-}): Promise<CommentVO[]> => {
-  return await get<CommentVO[]>(`/comment/list`, params)
+}): Promise<PageResult<CommentVO[]>> => {
+  return await get<PageResult<CommentVO[]>>(`/comment/list`, params)
 }
 
 // 获取评论总数

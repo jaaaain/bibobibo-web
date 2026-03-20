@@ -1,76 +1,67 @@
 <template>
-    <header class="app-header">
-      <HeaderBar />
-    </header>
+  <header class="app-header">
+    <HeaderBar />
+  </header>
 
-    <div class="app-main">
-      
-      <main class="left-container">
-        <div class="player-wrapper">
-          <router-view />
+  <div class="app-main">
+    <main class="left-container">
+      <div class="player-wrapper">
+        <router-view />
+      </div>
+
+      <div class="comment-section card">
+        <CommentTree v-if="videoId" :vid="videoId" />
+      </div>
+    </main>
+
+    <aside class="right-container">
+      <div class="sticky-wrapper">
+        <div class="author-card card">
+          UP主信息
         </div>
 
-        <div class="comment-section card">
-          <h3>评论区</h3>
-          <div v-for="n in 10" :key="n" class="mock-comment">评论内容 {{ n }}...</div>
+        <div class="danmaku-list card">
+          弹幕列表（可收起）
         </div>
-      </main>
 
-      <aside class="right-container">
-        <div class="sticky-wrapper">
-          <div class="author-card card">
-            UP主信息
-          </div>
-          
-          <div class="danmaku-list card">
-            弹幕列表 (可收起)
-          </div>
-
-          <div class="recommend-list card">
-            <h3>推荐视频</h3>
-            <div v-for="n in 20" :key="n" class="mock-rec">推荐视频 {{ n }}</div>
-          </div>
+        <div class="recommend-list card">
+          <h3>推荐视频</h3>
+          <div v-for="n in 20" :key="n" class="mock-rec">推荐视频 {{ n }}</div>
         </div>
-      </aside>
-
-    </div>
+      </div>
+    </aside>
+  </div>
 </template>
 
-<script setup lang="ts"> 
+<script setup lang="ts">
+import CommentTree from '@/components/features/comment/CommentTree.vue'
+
+const route = useRoute()
+const videoId = computed(() => Number(route.params.id))
 </script>
 
 <style scoped>
-/* 3. 核心布局容器 */
 .app-main {
-  align-items: flex-start; /* 顶部对齐，防止子元素默认拉伸高度(sticky) */
+  align-items: flex-start;
   gap: 30px;
 }
 
-/* 4. 左侧区域 */
 .left-container {
   width: 862px;
-  /* 防止被挤压 */
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
-/* 5. 右侧区域 */
 .right-container {
   width: 411px;
   min-width: 250px;
   flex-shrink: 0;
 }
 
-/* 6. 核心功能：右侧粘性滚动 (Sticky Sidebar) */
-/* 原理：当页面滚动时，.sticky-wrapper 会相对于 .right-container 移动，
-   配合 main-layout 的 align-items: flex-start，
-   可以让右侧内容在滚动时吸附在顶部。
-*/
 .sticky-wrapper {
   position: sticky;
-  top: 20px; /* 距离顶部的吸附距离，如果有 fixed header，这里要加上 header 高度 */
+  top: 20px;
 }
 
-/* --- 以下仅为视觉模拟样式，开发时可删除 --- */
 .card {
   background: #fff;
   border-radius: 6px;
@@ -79,10 +70,8 @@
   border: 1px solid #e3e5e7;
 }
 
-.mock-comment {
-  height: 60px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
+.comment-section {
+  padding: 24px;
 }
 
 .mock-rec {
