@@ -19,12 +19,7 @@
     <div class="player-placeholder">
       <div class="player-placeholder-top">
         <video ref="videoRef" class="player" controls :src="videoDetail.videoUrl"></video>
-        <DanmakuLayer
-      ref="dmLayerRef"
-      :video="videoRef"
-      :dmList="dmList"
-      :enabled="dmEnabled"
-    />
+        <DanmakuLayer ref="dmLayerRef" :video="videoRef" :dmList="dmList" :enabled="dmEnabled"/>
       </div>
       <div class="player-placeholder-bottom">
         <div class="player-placeholder-bottom-left">
@@ -71,13 +66,13 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import DanmakuLayer from './DanmakuLayer.vue'
 import { apiGetListDanmaku, connectDanmaku, joinVideo, leaveVideo, onDanmaku, onViewerCount, sendDanmaku } from "@/api/danmaku"
 import { apiGetVideoById } from "@/api/video"
 import { useUserStore } from "@/store"
 import { Danmaku } from "@/types/danmaku"
 import type { VideoDataDetailVO } from "@/types/video"
 import { wsClient } from '@/utils/websocket'
+import DanmakuLayer from '@/components/features/video-player/danmaku/DanmakuLayer.vue'
 
 const route = useRoute()
 const videoDetail = ref<VideoDataDetailVO | null>(null)

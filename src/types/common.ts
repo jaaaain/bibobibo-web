@@ -7,8 +7,10 @@ export interface Result<T = any> {
 
 // 分页结构
 export interface PageResult<T = any> {
-  total: number
+  total?: number
   list: T[]
+  nextCursor?: string
+  hasMore?: boolean
 }
 
 export interface BaseQuery {
